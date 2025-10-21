@@ -505,7 +505,9 @@ function cq_images_settings_page_html() {
             'cq_about_team_3',
             'cq_about_team_4',
             'cq_about_team_5',
-            'cq_about_team_6'
+            'cq_about_team_6',
+            'cq_footer_logo_1',
+            'cq_footer_logo_2'
         );
 
         foreach ($image_fields as $field) {
@@ -547,6 +549,21 @@ function cq_images_settings_page_html() {
                         <th scope="row">Foto Miembro del Equipo <?php echo $i; ?></th>
                         <td>
                             <?php cq_image_uploader_field($field_name, $field_value); ?>
+                        </td>
+                    </tr>
+                <?php endfor; ?>
+            </table>
+
+            <h2>Footer - Logos</h2>
+            <table class="form-table">
+                <?php for ($i = 1; $i <= 2; $i++): ?>
+                    <?php $field_name = 'cq_footer_logo_' . $i; ?>
+                    <?php $field_value = get_option($field_name, ''); ?>
+                    <tr>
+                        <th scope="row">Logo <?php echo $i; ?></th>
+                        <td>
+                            <?php cq_image_uploader_field($field_name, $field_value); ?>
+                            <p class="description">Logo <?php echo $i; ?> que aparece en el footer del sitio.</p>
                         </td>
                     </tr>
                 <?php endfor; ?>

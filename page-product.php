@@ -181,7 +181,7 @@ $products = array(
 
 // Determine slug - fallback logic
 if (!isset($products[$product_slug])) {
-  echo '<main class="max-w-7xl" style="padding:48px 24px;"><h2>Producto no encontrado</h2><p style="color:#9aa7ad">El producto solicitado no existe.</p><p style="margin-top:16px;"><a href="'.esc_url(add_query_arg('view','shop',home_url('/'))).'" class="btn btn-primary">Volver a la Tienda</a></p></main>';
+  echo '<main class="max-w-7xl" style="padding:48px 24px;"><h2>Producto no encontrado</h2><p style="color:#9aa7ad">El producto solicitado no existe.</p><p style="margin-top:16px;"><a href="'.esc_url(home_url('/tienda')).'" class="btn btn-primary">Volver a la Tienda</a></p></main>';
   get_footer();
   return;
 }
@@ -217,7 +217,7 @@ $p = $product_data;
   <div style="margin-bottom:24px;color:#9aa7ad;font-size:14px;">
     <a href="<?php echo esc_url(home_url('/')); ?>" style="color:#9aa7ad;text-decoration:none;">Inicio</a>
     <span style="margin:0 8px;">/</span>
-    <a href="<?php echo esc_url(add_query_arg('view','shop', home_url('/'))); ?>" style="color:#9aa7ad;text-decoration:none;">Tienda</a>
+    <a href="<?php echo esc_url(home_url('/tienda')); ?>" style="color:#9aa7ad;text-decoration:none;">Tienda</a>
     <span style="margin:0 8px;">/</span>
     <span style="color:#fff;"><?php echo esc_html($p['title']); ?></span>
   </div>
@@ -268,11 +268,11 @@ $p = $product_data;
       </div>
 
       <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
-        <a href="<?php echo esc_url(add_query_arg('view','contact', home_url('/'))); ?>" class="btn btn-primary" style="flex:1;min-width:200px;justify-content:center;">
+        <a href="<?php echo esc_url(home_url('/contacto')); ?>" class="btn btn-primary" style="flex:1;min-width:200px;justify-content:center;">
           <i class="bi bi-cart-fill"></i>
           Consultar disponibilidad
         </a>
-        <a href="<?php echo esc_url(add_query_arg('view','shop', home_url('/'))); ?>" class="btn btn-ghost">
+        <a href="<?php echo esc_url(home_url('/tienda')); ?>" class="btn btn-ghost">
           <i class="bi bi-arrow-left"></i>
           Volver a la tienda
         </a>

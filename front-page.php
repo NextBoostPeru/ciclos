@@ -13,8 +13,8 @@ get_header();
       <p class="lead" style="margin-top:14px;max-width:620px;">Bicicletas y accesorios seleccionados para quienes viven la pasión del pedaleo. Servicio técnico profesional y asesoría personalizada.</p>
 
       <div style="margin-top:22px;display:flex;gap:12px;flex-wrap:wrap;">
-        <a href="<?php echo esc_url(add_query_arg('view','shop', home_url('/'))); ?>" class="btn btn-primary">Ver productos</a>
-        <a href="<?php echo esc_url(add_query_arg('view','contact', home_url('/'))); ?>" class="btn btn-ghost">Contáctanos</a>
+        <a href="<?php echo esc_url(home_url('/tienda')); ?>" class="btn btn-primary">Ver productos</a>
+        <a href="<?php echo esc_url(home_url('/contacto')); ?>" class="btn btn-ghost">Contáctanos</a>
       </div>
 
       <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:520px;">
@@ -44,7 +44,7 @@ get_header();
           <div style="font-size:12px;color:#9aa7ad">Precio desde</div>
           <div style="font-weight:800;font-size:20px">€1,499</div>
         </div>
-        <a href="<?php echo esc_url(add_query_arg('view','shop', home_url('/'))); ?>" class="btn" style="background:#0f766e;color:#000;margin-left:auto;">Comprar</a>
+        <a href="<?php echo esc_url(home_url('/tienda')); ?>" class="btn" style="background:#0f766e;color:#000;margin-left:auto;">Comprar</a>
       </div>
     </div>
   </div>
@@ -140,7 +140,7 @@ get_header();
     </div>
 
     <div style="text-align:center;margin-top:40px;">
-      <a href="<?php echo esc_url(add_query_arg('view','contact', home_url('/'))); ?>" class="btn btn-primary">
+      <a href="<?php echo esc_url(home_url('/contacto')); ?>" class="btn btn-primary">
         <i class="bi bi-calendar-check"></i>
         Agendar Servicio
       </a>
@@ -152,7 +152,7 @@ get_header();
   <div class="max-w-7xl">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
       <h2>Productos Destacados</h2>
-      <a href="<?php echo esc_url(add_query_arg('view','shop', home_url('/'))); ?>" class="btn btn-ghost" style="padding:10px 16px;font-size:14px;">
+      <a href="<?php echo esc_url(home_url('/tienda')); ?>" class="btn btn-ghost" style="padding:10px 16px;font-size:14px;">
         Ver Todos <i class="bi bi-arrow-right"></i>
       </a>
     </div>

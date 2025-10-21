@@ -170,7 +170,7 @@ get_header();
         y <strong style="color:#0f766e;">Continental</strong>.
       </p>
       <div style="margin-top:24px;">
-        <a href="<?php echo esc_url(add_query_arg('view','contact', home_url('/'))); ?>" class="btn btn-primary">
+        <a href="<?php echo esc_url(home_url('/contacto')); ?>" class="btn btn-primary">
           Visítanos en Tienda
         </a>
       </div>
