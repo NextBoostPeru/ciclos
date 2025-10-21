@@ -16,7 +16,7 @@ if (!empty($product)) {
 }
 
 // Route by view using absolute paths
-if ($view === 'contact') {
+if ($view === 'contacto') {
   $file = $theme_dir . '/page-contact.php';
   if ( file_exists($file) ) {
     include $file;
