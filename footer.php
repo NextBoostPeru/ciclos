@@ -25,8 +25,15 @@
       $logo1_url = $logo1_id ? wp_get_attachment_image_url($logo1_id, 'full') : '';
       $logo2_url = $logo2_id ? wp_get_attachment_image_url($logo2_id, 'full') : '';
 
-      // Debug info (visible in HTML source)
-      echo '<!-- Footer Logos Debug: Logo1 ID='.$logo1_id.', Logo1 URL='.$logo1_url.', Logo2 ID='.$logo2_id.', Logo2 URL='.$logo2_url.' -->';
+      // Debug info visible en la página
+      echo '<div style="background:#1a1a1a;border:2px solid #0f766e;padding:12px;border-radius:8px;margin:16px 0;font-family:monospace;font-size:11px;color:#0f766e;">';
+      echo '<strong>DEBUG INFO (Versión: ' . date('Y-m-d H:i:s') . ')</strong><br>';
+      echo 'Logo 1 ID: ' . ($logo1_id ? $logo1_id : 'No configurado') . '<br>';
+      echo 'Logo 1 URL: ' . ($logo1_url ? $logo1_url : 'No encontrado') . '<br>';
+      echo 'Logo 2 ID: ' . ($logo2_id ? $logo2_id : 'No configurado') . '<br>';
+      echo 'Logo 2 URL: ' . ($logo2_url ? $logo2_url : 'No encontrado') . '<br>';
+      echo 'Template: footer.php v2.0<br>';
+      echo '</div>';
 
       if ($logo1_url || $logo2_url): ?>
       <div style="display:flex;gap:24px;align-items:center;justify-content:center;padding:20px 0;flex-wrap:wrap;">
@@ -40,6 +47,11 @@
             <img src="<?php echo esc_url($logo2_url); ?>" alt="Logo 2" style="max-height:60px;max-width:180px;height:auto;width:auto;object-fit:contain;display:block;" />
           </div>
         <?php endif; ?>
+      </div>
+      <?php else: ?>
+      <div style="background:rgba(239,68,68,0.1);border:1px solid #ef4444;padding:12px;border-radius:8px;margin:16px 0;text-align:center;color:#ef4444;">
+        <strong>⚠️ Logos no configurados</strong><br>
+        Ve a <strong>Apariencia → Imágenes del Sitio</strong> para agregar logos al footer
       </div>
       <?php endif; ?>
 

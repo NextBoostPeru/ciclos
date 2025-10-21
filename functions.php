@@ -29,15 +29,34 @@ function cq_enqueue_scripts() {
 }
 add_action('wp_enqueue_scripts', 'cq_enqueue_scripts');
 
-// Add headers to prevent caching during development
+// Disable all WordPress caching
+if (!defined('WP_CACHE')) define('WP_CACHE', false);
+if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+if (!defined('DONOTCACHEDB')) define('DONOTCACHEDB', true);
+if (!defined('DONOTMINIFY')) define('DONOTMINIFY', true);
+if (!defined('DONOTCDN')) define('DONOTCDN', true);
+if (!defined('DONOTCACHEOBJECT')) define('DONOTCACHEOBJECT', true);
+
+// Add headers to prevent caching
 function cq_add_no_cache_headers() {
   if (!is_admin()) {
-    header("Cache-Control: no-cache, no-store, must-revalidate");
+    header("Cache-Control: no-cache, no-store, must-revalidate, max-age=0");
     header("Pragma: no-cache");
-    header("Expires: 0");
+    header("Expires: Thu, 01 Jan 1970 00:00:00 GMT");
+    header("X-Accel-Expires: 0");
   }
 }
 add_action('send_headers', 'cq_add_no_cache_headers');
+
+// Disable WordPress object cache
+add_filter('wp_using_ext_object_cache', '__return_false');
+
+// Clear all caches on every page load (temporary for debugging)
+add_action('init', function() {
+  if (!is_admin()) {
+    wp_cache_flush();
+  }
+});
 
 
 
@@ -79,6 +98,15 @@ function cq_create_demo_pages_on_activation() {
     flush_rewrite_rules();
 }
 add_action('after_switch_theme', 'cq_create_demo_pages_on_activation');
+
+// Force flush rewrite rules on init to ensure clean URLs work
+add_action('init', function() {
+    static $flushed = false;
+    if (!$flushed && !is_admin()) {
+        flush_rewrite_rules(false);
+        $flushed = true;
+    }
+}, 999);
 
 
 
