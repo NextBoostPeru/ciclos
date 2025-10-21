@@ -462,6 +462,9 @@ add_action('admin_menu', 'cq_add_images_settings_page');
 function cq_images_settings_page_html() {
     if (!current_user_can('manage_options')) return;
 
+    // Enqueue media uploader scripts
+    wp_enqueue_media();
+
     // Guardar cambios
     if (isset($_POST['cq_save_images'])) {
         check_admin_referer('cq_images_settings');
