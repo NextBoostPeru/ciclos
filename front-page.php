@@ -45,7 +45,105 @@ get_header();
   </div>
 </section>
 
-<section style="padding:40px 0;border-top:1px solid rgba(255,255,255,0.03);">
+<section style="padding:60px 0;border-top:1px solid rgba(255,255,255,0.04);">
+  <div class="max-w-7xl">
+    <div style="text-align:center;max-width:700px;margin:0 auto 50px;">
+      <h2>Nuestros Servicios</h2>
+      <p class="lead" style="margin-top:16px;">
+        Más que una tienda, somos tu taller especializado con todo lo que necesitas para mantener tu bicicleta en perfecto estado.
+      </p>
+    </div>
+
+    <div class="grid-3">
+      <div class="service-card">
+        <div class="service-icon">
+          <i class="bi bi-tools"></i>
+        </div>
+        <h3 style="margin-bottom:12px;">Mantenimiento Integral</h3>
+        <p style="color:#cbd5da;line-height:1.7;">
+          Desde ajustes básicos hasta revisiones completas. Nuestros técnicos certificados cuidan cada detalle para que tu bici funcione perfectamente.
+        </p>
+        <div style="margin-top:16px;font-size:14px;color:#0f766e;font-weight:600;">
+          Desde S/ 89
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">
+          <i class="bi bi-lightning-charge-fill"></i>
+        </div>
+        <h3 style="margin-bottom:12px;">Puesta a Punto</h3>
+        <p style="color:#cbd5da;line-height:1.7;">
+          Optimiza el rendimiento de tu bicicleta. Ajuste de suspensiones, cambios, frenos y geometría personalizada según tu estilo de conducción.
+        </p>
+        <div style="margin-top:16px;font-size:14px;color:#0f766e;font-weight:600;">
+          Desde S/ 149
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">
+          <i class="bi bi-diagram-3-fill"></i>
+        </div>
+        <h3 style="margin-bottom:12px;">Suspensiones</h3>
+        <p style="color:#cbd5da;line-height:1.7;">
+          Servicio especializado de horquillas y amortiguadores FOX, RockShox y DT Swiss. Cambios de aceite, retenes y ajustes profesionales.
+        </p>
+        <div style="margin-top:16px;font-size:14px;color:#0f766e;font-weight:600;">
+          Desde S/ 199
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">
+          <i class="bi bi-person-check-fill"></i>
+        </div>
+        <h3 style="margin-bottom:12px;">Bikefitting</h3>
+        <p style="color:#cbd5da;line-height:1.7;">
+          Análisis biomecánico completo para ajustar tu bicicleta a tu anatomía. Mejora tu rendimiento y previene lesiones con una posición óptima.
+        </p>
+        <div style="margin-top:16px;font-size:14px;color:#0f766e;font-weight:600;">
+          S/ 299
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">
+          <i class="bi bi-box-seam"></i>
+        </div>
+        <h3 style="margin-bottom:12px;">Montaje Premium</h3>
+        <p style="color:#cbd5da;line-height:1.7;">
+          Montaje profesional de bicicletas nuevas o componentes. Incluye ajuste fino, verificación de torque y entrega lista para rodar.
+        </p>
+        <div style="margin-top:16px;font-size:14px;color:#0f766e;font-weight:600;">
+          S/ 179
+        </div>
+      </div>
+
+      <div class="service-card">
+        <div class="service-icon">
+          <i class="bi bi-gear-wide-connected"></i>
+        </div>
+        <h3 style="margin-bottom:12px;">Upgrade de Componentes</h3>
+        <p style="color:#cbd5da;line-height:1.7;">
+          Te asesoramos y instalamos mejoras para tu bicicleta: grupos de transmisión, ruedas, frenos, potencias y más componentes de alta gama.
+        </p>
+        <div style="margin-top:16px;font-size:14px;color:#0f766e;font-weight:600;">
+          Consultar
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;margin-top:40px;">
+      <a href="<?php echo esc_url(add_query_arg('view','contact', home_url('/'))); ?>" class="btn btn-primary">
+        <i class="bi bi-calendar-check"></i>
+        Agendar Servicio
+      </a>
+    </div>
+  </div>
+</section>
+
+<section style="padding:60px 0;border-top:1px solid rgba(255,255,255,0.04);">
   <div class="max-w-7xl">
     <h2>Productos destacados</h2>
     <div class="carousel" aria-label="Productos destacados">
