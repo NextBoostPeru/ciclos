@@ -1,5 +1,16 @@
 <?php
 get_header();
+
+// Check for success/error messages
+$message = '';
+$message_type = '';
+if (isset($_GET['cq_sent'])) {
+    $message = '¡Mensaje enviado correctamente! Te responderemos pronto.';
+    $message_type = 'success';
+} elseif (isset($_GET['cq_error'])) {
+    $message = 'Hubo un error al enviar el mensaje. Por favor, intenta de nuevo.';
+    $message_type = 'error';
+}
 ?>
 <main class="max-w-7xl" style="padding:48px 24px;">
   <!-- Hero Section -->
@@ -10,6 +21,18 @@ get_header();
       Estamos aquí para ayudarte. Escríbenos y te responderemos en menos de 24 horas.
     </p>
   </div>
+
+  <!-- Success/Error Message -->
+  <?php if ($message): ?>
+  <div style="max-width:900px;margin:0 auto 40px;padding:20px;border-radius:12px;background:<?php echo $message_type === 'success' ? 'rgba(15,118,110,0.15)' : 'rgba(239,68,68,0.15)'; ?>;border:2px solid <?php echo $message_type === 'success' ? 'rgba(15,118,110,0.5)' : 'rgba(239,68,68,0.5)'; ?>;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <i class="bi bi-<?php echo $message_type === 'success' ? 'check-circle-fill' : 'exclamation-circle-fill'; ?>" style="font-size:24px;color:<?php echo $message_type === 'success' ? '#0f766e' : '#ef4444'; ?>;"></i>
+      <span style="color:<?php echo $message_type === 'success' ? '#0f766e' : '#ef4444'; ?>;font-weight:600;">
+        <?php echo esc_html($message); ?>
+      </span>
+    </div>
+  </div>
+  <?php endif; ?>
 
   <!-- Contact Methods -->
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;margin-bottom:60px;">
@@ -250,6 +273,91 @@ get_header();
 
     </div>
   </div>
+
+  <!-- Form Validation Script -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const contactForm = document.querySelector('form[action*="admin-post.php"]');
+
+    if (contactForm) {
+      contactForm.addEventListener('submit', function(e) {
+        const nombre = this.querySelector('[name="nombre"]');
+        const email = this.querySelector('[name="email"]');
+        const mensaje = this.querySelector('[name="mensaje"]');
+        const submitBtn = this.querySelector('button[type="submit"]');
+
+        let errors = [];
+
+        // Validate name
+        if (nombre && nombre.value.trim().length < 2) {
+          errors.push('El nombre debe tener al menos 2 caracteres');
+          nombre.style.borderColor = '#ef4444';
+        } else if (nombre) {
+          nombre.style.borderColor = 'rgba(255,255,255,0.08)';
+        }
+
+        // Validate email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email && !emailRegex.test(email.value)) {
+          errors.push('El email no es válido');
+          email.style.borderColor = '#ef4444';
+        } else if (email) {
+          email.style.borderColor = 'rgba(255,255,255,0.08)';
+        }
+
+        // Validate message
+        if (mensaje && mensaje.value.trim().length < 10) {
+          errors.push('El mensaje debe tener al menos 10 caracteres');
+          mensaje.style.borderColor = '#ef4444';
+        } else if (mensaje) {
+          mensaje.style.borderColor = 'rgba(255,255,255,0.08)';
+        }
+
+        if (errors.length > 0) {
+          e.preventDefault();
+          alert('Por favor corrige los siguientes errores:\n\n' + errors.join('\n'));
+          return false;
+        }
+
+        // Show loading state
+        if (submitBtn) {
+          submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Enviando...';
+          submitBtn.disabled = true;
+        }
+      });
+
+      // Add real-time validation
+      const inputs = contactForm.querySelectorAll('input[required], textarea[required]');
+      inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+          if (this.value.trim() === '') {
+            this.style.borderColor = '#ef4444';
+          } else {
+            this.style.borderColor = 'rgba(15,118,110,0.5)';
+          }
+        });
+
+        input.addEventListener('focus', function() {
+          this.style.borderColor = '#0f766e';
+        });
+      });
+    }
+
+    // Add animation to FAQ items
+    const details = document.querySelectorAll('details');
+    details.forEach(detail => {
+      detail.addEventListener('toggle', function() {
+        if (this.open) {
+          this.style.background = 'linear-gradient(135deg, rgba(15,118,110,0.08), rgba(15,118,110,0.02))';
+          this.style.borderColor = 'rgba(15,118,110,0.3)';
+        } else {
+          this.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))';
+          this.style.borderColor = 'rgba(255,255,255,0.08)';
+        }
+      });
+    });
+  });
+  </script>
 
 </main>
 <?php

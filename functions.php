@@ -72,19 +72,48 @@ add_action('after_switch_theme', 'cq_create_demo_pages_on_activation');
    They redirect back with a query param and send email to admin_email.
 */
 function cq_handle_contact_form() {
-  if (!isset($_POST['nombre'])) wp_redirect( wp_get_referer() ?: home_url('/') );
-  $name = sanitize_text_field($_POST['nombre']);
-  $contact = sanitize_text_field($_POST['contacto']);
-  $message = sanitize_textarea_field($_POST['mensaje']);
-  $to = get_option('admin_email');
-  $subject = 'Contacto desde web: ' . $name;
-  $body = "Nombre: $name
-Contacto: $contact
+  if (!isset($_POST['nombre'])) {
+    wp_redirect( add_query_arg('cq_error','1', wp_get_referer() ?: home_url('/') ) );
+    exit;
+  }
 
-Mensaje:
-$message";
-  wp_mail($to, $subject, $body);
-  wp_redirect( add_query_arg('cq_sent','1', wp_get_referer() ?: home_url('/') ) );
+  $name = sanitize_text_field($_POST['nombre']);
+  $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+  $phone = isset($_POST['telefono']) ? sanitize_text_field($_POST['telefono']) : '';
+  $subject_type = isset($_POST['asunto']) ? sanitize_text_field($_POST['asunto']) : 'Consulta general';
+  $message = sanitize_textarea_field($_POST['mensaje']);
+
+  // Validate required fields
+  if (empty($name) || empty($email) || empty($message)) {
+    wp_redirect( add_query_arg('cq_error','1', wp_get_referer() ?: home_url('/') ) );
+    exit;
+  }
+
+  $to = get_option('admin_email');
+  $subject = 'Contacto desde web: ' . $subject_type . ' - ' . $name;
+
+  $body = "=== NUEVO MENSAJE DE CONTACTO ===\n\n";
+  $body .= "Nombre: $name\n";
+  $body .= "Email: $email\n";
+  if ($phone) $body .= "Teléfono: $phone\n";
+  $body .= "Asunto: $subject_type\n";
+  $body .= "\n--- MENSAJE ---\n\n";
+  $body .= $message;
+  $body .= "\n\n--- FIN DEL MENSAJE ---\n";
+  $body .= "\nFecha: " . date('d/m/Y H:i:s');
+
+  $headers = array(
+    'From: ' . $name . ' <' . $email . '>',
+    'Reply-To: ' . $email
+  );
+
+  $sent = wp_mail($to, $subject, $body, $headers);
+
+  if ($sent) {
+    wp_redirect( add_query_arg('cq_sent','1', wp_get_referer() ?: home_url('/') ) );
+  } else {
+    wp_redirect( add_query_arg('cq_error','1', wp_get_referer() ?: home_url('/') ) );
+  }
   exit;
 }
 add_action('admin_post_nopriv_cq_contact_form','cq_handle_contact_form');
@@ -247,8 +276,8 @@ function cq_product_details_callback($post) {
 
     <div class="cq-meta-grid">
         <div class="cq-meta-box">
-            <label for="cq_price">Precio (ej: S/ 2,799)</label>
-            <input type="text" id="cq_price" name="cq_price" value="<?php echo esc_attr($price); ?>" placeholder="S/ 0,000" />
+            <label for="cq_price">Precio (ej: €2,799)</label>
+            <input type="text" id="cq_price" name="cq_price" value="<?php echo esc_attr($price); ?>" placeholder="€0,000" />
         </div>
 
         <div class="cq-meta-box">

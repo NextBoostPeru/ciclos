@@ -42,7 +42,7 @@ get_header();
       <div style="margin-top:12px;display:flex;align-items:center;gap:12px;background:linear-gradient(90deg, rgba(0,0,0,0.7), transparent);padding:12px;border-radius:12px;margin-left:6px;">
         <div>
           <div style="font-size:12px;color:#9aa7ad">Precio desde</div>
-          <div style="font-weight:800;font-size:20px">S/ 1,499</div>
+          <div style="font-weight:800;font-size:20px">€1,499</div>
         </div>
         <a href="<?php echo esc_url(add_query_arg('view','shop', home_url('/'))); ?>" class="btn" style="background:#0f766e;color:#000;margin-left:auto;">Comprar</a>
       </div>
@@ -69,7 +69,7 @@ get_header();
           Desde ajustes básicos hasta revisiones completas. Nuestros técnicos certificados cuidan cada detalle para que tu bici funcione perfectamente.
         </p>
         <div style="margin-top:16px;font-size:14px;color:#0f766e;font-weight:600;">
-          Desde S/ 89
+          Desde €89
         </div>
       </div>
 
@@ -82,7 +82,7 @@ get_header();
           Optimiza el rendimiento de tu bicicleta. Ajuste de suspensiones, cambios, frenos y geometría personalizada según tu estilo de conducción.
         </p>
         <div style="margin-top:16px;font-size:14px;color:#0f766e;font-weight:600;">
-          Desde S/ 149
+          Desde €149
         </div>
       </div>
 
@@ -95,7 +95,7 @@ get_header();
           Servicio especializado de horquillas y amortiguadores FOX, RockShox y DT Swiss. Cambios de aceite, retenes y ajustes profesionales.
         </p>
         <div style="margin-top:16px;font-size:14px;color:#0f766e;font-weight:600;">
-          Desde S/ 199
+          Desde €199
         </div>
       </div>
 
@@ -108,7 +108,7 @@ get_header();
           Análisis biomecánico completo para ajustar tu bicicleta a tu anatomía. Mejora tu rendimiento y previene lesiones con una posición óptima.
         </p>
         <div style="margin-top:16px;font-size:14px;color:#0f766e;font-weight:600;">
-          S/ 299
+          €299
         </div>
       </div>
 
@@ -121,7 +121,7 @@ get_header();
           Montaje profesional de bicicletas nuevas o componentes. Incluye ajuste fino, verificación de torque y entrega lista para rodar.
         </p>
         <div style="margin-top:16px;font-size:14px;color:#0f766e;font-weight:600;">
-          S/ 179
+          €179
         </div>
       </div>
 
@@ -200,10 +200,10 @@ get_header();
       else:
           // Fallback to placeholder items if no products
           $items = array(
-            array('title'=>'MTB Pro X1','img'=>'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=800','price'=>'S/ 2,799','slug'=>'mtb-pro-x1'),
-            array('title'=>'Ruta Aero S3','img'=>'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=800','price'=>'S/ 4,199','slug'=>'ruta-aero-s3'),
-            array('title'=>'Gravel Adventurer','img'=>'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=800','price'=>'S/ 3,249','slug'=>'gravel-adventurer'),
-            array('title'=>'Urban Rider','img'=>'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800','price'=>'S/ 999','slug'=>'urban-rider')
+            array('title'=>'MTB Pro X1','img'=>'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=800','price'=>'€2,799','slug'=>'mtb-pro-x1'),
+            array('title'=>'Ruta Aero S3','img'=>'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=800','price'=>'€4,199','slug'=>'ruta-aero-s3'),
+            array('title'=>'Gravel Adventurer','img'=>'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=800','price'=>'€3,249','slug'=>'gravel-adventurer'),
+            array('title'=>'Urban Rider','img'=>'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800','price'=>'€999','slug'=>'urban-rider')
           );
           foreach($items as $it){
             echo '<article class="card"><a href="'.esc_url(add_query_arg(array('product'=>$it['slug']), home_url('/'))).'" style="text-decoration:none;color:inherit;"><img src="'.esc_url($it['img']).'" alt="'.esc_attr($it['title']).'"/><div style="padding:14px;"><div style="font-weight:800;font-size:16px;color:#fff;">'.esc_html($it['title']).'</div><div style="color:#0f766e;font-weight:700;margin-top:10px;">'.esc_html($it['price']).'</div></div></a></article>';

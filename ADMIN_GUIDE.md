@@ -26,7 +26,7 @@ Esta guía te ayudará a gestionar productos e imágenes en tu sitio web de Cicl
 
 En el box "Detalles del Producto":
 
-- **Precio**: Escribe el precio con formato (ej: "S/ 2,799")
+- **Precio**: Escribe el precio con formato (ej: "€2,799")
 - **Estado de Stock**: Selecciona entre:
   - En stock
   - Pre-orden
