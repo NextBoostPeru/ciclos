@@ -31,7 +31,12 @@ get_header();
 
     <div style="max-width:520px;margin-left:auto;">
       <div class="card card-shadow">
-        <img src="https://images.unsplash.com/photo-1518655048521-f130df041f66?q=80&w=1400&auto=format&fit=crop&s=abcdef" alt="Bicicleta carretera"/>
+        <?php
+        // Get hero image from WordPress options or use default
+        $hero_image_id = get_option('cq_hero_image', '');
+        $hero_image_url = $hero_image_id ? wp_get_attachment_image_url($hero_image_id, 'large') : 'https://images.unsplash.com/photo-1518655048521-f130df041f66?q=80&w=1400&auto=format&fit=crop&s=abcdef';
+        ?>
+        <img src="<?php echo esc_url($hero_image_url); ?>" alt="Bicicleta carretera"/>
       </div>
 
       <div style="margin-top:12px;display:flex;align-items:center;gap:12px;background:linear-gradient(90deg, rgba(0,0,0,0.7), transparent);padding:12px;border-radius:12px;margin-left:6px;">

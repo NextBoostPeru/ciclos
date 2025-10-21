@@ -65,60 +65,33 @@ get_header();
   <section style="margin-bottom:80px;">
     <h2 style="text-align:center;margin-bottom:40px;">Nuestro Equipo</h2>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:24px;">
+      <?php
+      // Array de miembros del equipo
+      $team_members = array(
+        array('name' => 'María López', 'role' => 'Jefa de Taller', 'bio' => '15 años de experiencia en mecánica de bicicletas. Especialista en suspensiones y transmisiones de alta gama.', 'option' => 'cq_about_team_1', 'default' => 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400'),
+        array('name' => 'Carlos Ruiz', 'role' => 'Director Comercial', 'bio' => 'Ciclista profesional retirado con 10 años en el sector retail. Experto en asesoría de producto y bikefitting.', 'option' => 'cq_about_team_2', 'default' => 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=400'),
+        array('name' => 'Javier Martínez', 'role' => 'Técnico de Suspensiones', 'bio' => 'Certificado por FOX y RockShox. Especializado en puesta a punto de suspensiones para competición y enduro.', 'option' => 'cq_about_team_3', 'default' => 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400'),
+        array('name' => 'Ana García', 'role' => 'Asesora de Ventas', 'bio' => 'Apasionada del gravel y cicloturismo. Ayuda a encontrar la bicicleta perfecta para cada tipo de ciclista.', 'option' => 'cq_about_team_4', 'default' => 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=400'),
+        array('name' => 'Roberto Sánchez', 'role' => 'Técnico de Montaje', 'bio' => '8 años de experiencia en montaje y mantenimiento. Especialista en sistemas electrónicos de cambio.', 'option' => 'cq_about_team_5', 'default' => 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400'),
+        array('name' => 'Laura Fernández', 'role' => 'Gerente de Tienda', 'bio' => 'MBA y ciclista amateur. Coordina operaciones y garantiza la mejor experiencia para nuestros clientes.', 'option' => 'cq_about_team_6', 'default' => 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400'),
+      );
 
+      foreach ($team_members as $member):
+        // Get image from WordPress options or use default
+        $image_id = get_option($member['option'], '');
+        $image_url = $image_id ? wp_get_attachment_image_url($image_id, 'medium') : $member['default'];
+      ?>
       <div class="team-card">
-        <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400" alt="María López"/>
-        <h4>María López</h4>
-        <div style="color:#0f766e;font-size:14px;font-weight:600;margin-bottom:8px;">Jefa de Taller</div>
+        <img src="<?php echo esc_url($image_url); ?>" alt="<?php echo esc_attr($member['name']); ?>"/>
+        <h4><?php echo esc_html($member['name']); ?></h4>
+        <div style="color:#0f766e;font-size:14px;font-weight:600;margin-bottom:8px;">
+          <?php echo esc_html($member['role']); ?>
+        </div>
         <p style="color:#9aa7ad;font-size:14px;line-height:1.6;">
-          15 años de experiencia en mecánica de bicicletas. Especialista en suspensiones y transmisiones de alta gama.
+          <?php echo esc_html($member['bio']); ?>
         </p>
       </div>
-
-      <div class="team-card">
-        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=400" alt="Carlos Ruiz"/>
-        <h4>Carlos Ruiz</h4>
-        <div style="color:#0f766e;font-size:14px;font-weight:600;margin-bottom:8px;">Director Comercial</div>
-        <p style="color:#9aa7ad;font-size:14px;line-height:1.6;">
-          Ciclista profesional retirado con 10 años en el sector retail. Experto en asesoría de producto y bikefitting.
-        </p>
-      </div>
-
-      <div class="team-card">
-        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400" alt="Javier Martínez"/>
-        <h4>Javier Martínez</h4>
-        <div style="color:#0f766e;font-size:14px;font-weight:600;margin-bottom:8px;">Técnico de Suspensiones</div>
-        <p style="color:#9aa7ad;font-size:14px;line-height:1.6;">
-          Certificado por FOX y RockShox. Especializado en puesta a punto de suspensiones para competición y enduro.
-        </p>
-      </div>
-
-      <div class="team-card">
-        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=400" alt="Ana García"/>
-        <h4>Ana García</h4>
-        <div style="color:#0f766e;font-size:14px;font-weight:600;margin-bottom:8px;">Asesora de Ventas</div>
-        <p style="color:#9aa7ad;font-size:14px;line-height:1.6;">
-          Apasionada del gravel y cicloturismo. Ayuda a encontrar la bicicleta perfecta para cada tipo de ciclista.
-        </p>
-      </div>
-
-      <div class="team-card">
-        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400" alt="Roberto Sánchez"/>
-        <h4>Roberto Sánchez</h4>
-        <div style="color:#0f766e;font-size:14px;font-weight:600;margin-bottom:8px;">Técnico de Montaje</div>
-        <p style="color:#9aa7ad;font-size:14px;line-height:1.6;">
-          8 años de experiencia en montaje y mantenimiento. Especialista en sistemas electrónicos de cambio.
-        </p>
-      </div>
-
-      <div class="team-card">
-        <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=400" alt="Laura Fernández"/>
-        <h4>Laura Fernández</h4>
-        <div style="color:#0f766e;font-size:14px;font-weight:600;margin-bottom:8px;">Gerente de Tienda</div>
-        <p style="color:#9aa7ad;font-size:14px;line-height:1.6;">
-          MBA y ciclista amateur. Coordina operaciones y garantiza la mejor experiencia para nuestros clientes.
-        </p>
-      </div>
+      <?php endforeach; ?>
 
     </div>
   </section>
