@@ -26,11 +26,11 @@
           'menu_class' => 'nav',
         ));
       } else {
-        // fallback simple menu linking to query-based routes (works without WP pages)
+        // fallback simple menu linking to clean routes
         $home = esc_url(home_url('/'));
-        $shop = esc_url(add_query_arg('view','shop',home_url('/')));
-        $nosotros = esc_url(add_query_arg('view','nosotros',home_url('/')));
-        $contacto = esc_url(add_query_arg('view','contacto',home_url('/')));
+        $shop = esc_url(home_url('/tienda'));
+        $nosotros = esc_url(home_url('/nosotros'));
+        $contacto = esc_url(home_url('/contacto'));
         echo '<nav class="nav">';
         echo '<a href="'.$home.'">Inicio</a>';
         echo '<a href="'.$shop.'">Tienda</a>';

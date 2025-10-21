@@ -19,7 +19,7 @@
       </div>
 
       <div style="text-align:center;color:#9aa7ad;font-size:14px;">
-        © <?php echo date('Y'); ?> CICLOS QUERALT SL · Calle Ejemplo 123 · Tel: (01) 234-5678
+        © <?php echo date('Y'); ?> CICLOS QUERALT SL · Carrer de Balmes, 156, 08008 Barcelona · Tel: +34 934 567 890
       </div>
     </div>
   </footer>
