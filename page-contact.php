@@ -20,12 +20,16 @@ get_header();
 
       <div style="padding:18px;">
         <h3 style="font-weight:800">Visítanos</h3>
-        <p style="color:#9aa7ad;margin-top:8px">Calle Ejemplo 123, Ciudad</p>
+        <p style="color:#9aa7ad;margin-top:8px">Carrer de Balmes, 156<br>08008 Barcelona, España</p>
+
         <h3 style="font-weight:800;margin-top:12px">Teléfono</h3>
-        <p style="color:#9aa7ad;margin-top:8px">(01) 234-5678</p>
+        <p style="color:#9aa7ad;margin-top:8px">+34 934 567 890</p>
+
+        <h3 style="font-weight:800;margin-top:12px">Email</h3>
+        <p style="color:#9aa7ad;margin-top:8px">info@ciclosqueralt.es</p>
 
         <h3 style="font-weight:800;margin-top:12px">Horario</h3>
-        <p style="color:#9aa7ad;margin-top:8px">Lun-Vie 9:00 - 19:00 · Sáb 9:00 - 14:00</p>
+        <p style="color:#9aa7ad;margin-top:8px">Lun-Vie: 10:00 - 14:00 y 17:00 - 20:30<br>Sáb: 10:00 - 14:00<br>Dom: Cerrado</p>
 
         <div style="margin-top:16px;">
           <h4 style="font-weight:700">Síguenos</h4>
@@ -42,7 +46,7 @@ get_header();
       <h3 style="font-weight:800">Dónde estamos</h3>
       <div style="margin-top:8px;border-radius:10px;overflow:hidden;">
         <!-- Map placeholder: replace with real embed if needed -->
-        <iframe src="https://www.google.com/maps?q=Lima&output=embed" style="width:100%;height:300px;border:0"></iframe>
+        <iframe src="https://www.google.com/maps?q=Carrer+de+Balmes+156+Barcelona&output=embed" style="width:100%;height:300px;border:0"></iframe>
       </div>
     </div>
   </div>
