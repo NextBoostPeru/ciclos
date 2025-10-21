@@ -145,18 +145,65 @@ get_header();
 
 <section style="padding:60px 0;border-top:1px solid rgba(255,255,255,0.04);">
   <div class="max-w-7xl">
-    <h2>Productos destacados</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+      <h2>Productos Destacados</h2>
+      <a href="<?php echo esc_url(add_query_arg('view','shop', home_url('/'))); ?>" class="btn btn-ghost" style="padding:10px 16px;font-size:14px;">
+        Ver Todos <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
     <div class="carousel" aria-label="Productos destacados">
       <?php
-      $items = array(
-        array('title'=>'MTB Pro X1','img'=>'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=800','price'=>'S/ 2,799'),
-        array('title'=>'Ruta Aero S3','img'=>'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=800','price'=>'S/ 4,199'),
-        array('title'=>'Gravel Adventurer','img'=>'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=800','price'=>'S/ 3,249'),
-        array('title'=>'Urban Rider','img'=>'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800','price'=>'S/ 999')
+      // Get featured products from WordPress
+      $featured_args = array(
+          'post_type' => 'cq_product',
+          'posts_per_page' => 6,
+          'post_status' => 'publish',
+          'orderby' => 'rand'
       );
-      foreach($items as $it){
-        echo '<article class="card"><img src="'.esc_url($it['img']).'" alt="'.esc_attr($it['title']).'"/><div style="padding:12px;"><div style="font-weight:800">'.esc_html($it['title']).'</div><div style="color:#9aa7ad;margin-top:6px">'.esc_html($it['price']).'</div></div></article>';
-      }
+
+      $featured_query = new WP_Query($featured_args);
+
+      if ($featured_query->have_posts()):
+          while ($featured_query->have_posts()): $featured_query->the_post();
+              $feat_id = get_the_ID();
+              $feat_price = get_post_meta($feat_id, '_cq_price', true);
+              $feat_slug = get_post_field('post_name', $feat_id);
+              $feat_img = get_the_post_thumbnail_url($feat_id, 'medium');
+              if (!$feat_img) {
+                  $feat_img = 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=800';
+              }
+              ?>
+              <article class="card">
+                  <a href="<?php echo esc_url(add_query_arg(array('product'=>$feat_slug), home_url('/'))); ?>" style="text-decoration:none;color:inherit;">
+                      <img src="<?php echo esc_url($feat_img); ?>" alt="<?php echo esc_attr(get_the_title()); ?>"/>
+                      <div style="padding:14px;">
+                          <div style="font-weight:800;font-size:16px;color:#fff;"><?php the_title(); ?></div>
+                          <?php if (has_excerpt()): ?>
+                          <div style="color:#9aa7ad;margin-top:6px;font-size:13px;">
+                              <?php echo wp_trim_words(get_the_excerpt(), 8); ?>
+                          </div>
+                          <?php endif; ?>
+                          <div style="color:#0f766e;font-weight:700;margin-top:10px;">
+                              <?php echo esc_html($feat_price ? $feat_price : 'Consultar'); ?>
+                          </div>
+                      </div>
+                  </a>
+              </article>
+              <?php
+          endwhile;
+          wp_reset_postdata();
+      else:
+          // Fallback to placeholder items if no products
+          $items = array(
+            array('title'=>'MTB Pro X1','img'=>'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=800','price'=>'S/ 2,799','slug'=>'mtb-pro-x1'),
+            array('title'=>'Ruta Aero S3','img'=>'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=800','price'=>'S/ 4,199','slug'=>'ruta-aero-s3'),
+            array('title'=>'Gravel Adventurer','img'=>'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=800','price'=>'S/ 3,249','slug'=>'gravel-adventurer'),
+            array('title'=>'Urban Rider','img'=>'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800','price'=>'S/ 999','slug'=>'urban-rider')
+          );
+          foreach($items as $it){
+            echo '<article class="card"><a href="'.esc_url(add_query_arg(array('product'=>$it['slug']), home_url('/'))).'" style="text-decoration:none;color:inherit;"><img src="'.esc_url($it['img']).'" alt="'.esc_attr($it['title']).'"/><div style="padding:14px;"><div style="font-weight:800;font-size:16px;color:#fff;">'.esc_html($it['title']).'</div><div style="color:#0f766e;font-weight:700;margin-top:10px;">'.esc_html($it['price']).'</div></div></a></article>';
+          }
+      endif;
       ?>
     </div>
   </div>

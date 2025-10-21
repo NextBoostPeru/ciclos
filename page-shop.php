@@ -1,41 +1,127 @@
 <?php
 get_header();
+
+// Get category filter
+$cat_slug = isset($_GET['cat']) ? sanitize_text_field($_GET['cat']) : '';
+
+// Get all categories
+$categories = get_terms(array(
+    'taxonomy' => 'cq_product_category',
+    'hide_empty' => false,
+));
+
+// Query products
+$args = array(
+    'post_type' => 'cq_product',
+    'posts_per_page' => -1,
+    'post_status' => 'publish',
+    'orderby' => 'menu_order title',
+    'order' => 'ASC'
+);
+
+// Filter by category if selected
+if ($cat_slug) {
+    $args['tax_query'] = array(
+        array(
+            'taxonomy' => 'cq_product_category',
+            'field'    => 'slug',
+            'terms'    => $cat_slug,
+        ),
+    );
+}
+
+$products_query = new WP_Query($args);
 ?>
-<section style="padding:36px 0;">
+
+<section style="padding:48px 24px;">
   <div class="max-w-7xl">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;">
-      <h2 style="font-size:26px;font-weight:800;margin:0;">Tienda</h2>
-      <div>
-        <label style="color:#9aa7ad;margin-right:8px;">Categoría</label>
-        <select onchange="location.href=this.value" style="padding:8px;border-radius:8px;background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;">
-          <option value="<?php echo esc_url(add_query_arg('view','shop',home_url('/'))); ?>">Todas</option>
-          <option value="<?php echo esc_url(add_query_arg(array('view'=>'shop','cat'=>'montana'),home_url('/'))); ?>">Montaña</option>
-          <option value="<?php echo esc_url(add_query_arg(array('view'=>'shop','cat'=>'carretera'),home_url('/'))); ?>">Carretera</option>
-          <option value="<?php echo esc_url(add_query_arg(array('view'=>'shop','cat'=>'accesorios'),home_url('/'))); ?>">Accesorios</option>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:32px;flex-wrap:wrap;">
+      <h1 style="margin:0;">Tienda</h1>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <label style="color:#9aa7ad;">Categoría:</label>
+        <select onchange="location.href=this.value" style="padding:10px 14px;border-radius:10px;background:rgba(255,255,255,0.03);border:2px solid rgba(255,255,255,0.08);color:inherit;min-width:150px;">
+          <option value="<?php echo esc_url(add_query_arg('view','shop',home_url('/'))); ?>" <?php selected($cat_slug, ''); ?>>Todas las Categorías</option>
+          <?php foreach ($categories as $cat): ?>
+          <option value="<?php echo esc_url(add_query_arg(array('view'=>'shop','cat'=>$cat->slug),home_url('/'))); ?>" <?php selected($cat_slug, $cat->slug); ?>>
+            <?php echo esc_html($cat->name); ?> (<?php echo $cat->count; ?>)
+          </option>
+          <?php endforeach; ?>
         </select>
       </div>
     </div>
 
     <div class="products-grid">
-      <?php
-      // products placeholder with category
-      $products = array(
-        array('slug'=>'mtb-pro-x1','title'=>'MTB Pro X1','img'=>'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=800','excerpt'=>'Suspensión 120mm · Cambio 12v','price'=>'S/ 2,799','cat'=>'montana'),
-        array('slug'=>'ruta-aero-s3','title'=>'Ruta Aero S3','img'=>'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=800','excerpt'=>'Cuadro carbono · Grupo 105','price'=>'S/ 4,199','cat'=>'carretera'),
-        array('slug'=>'gravel-adventurer','title'=>'Gravel Adventurer','img'=>'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=800','excerpt'=>'Versátil · Ruedas 700c','price'=>'S/ 3,249','cat'=>'montana'),
-        array('slug'=>'urban-rider','title'=>'Urban Rider','img'=>'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=800','excerpt'=>'Diseño urbano · Frenos disco','price'=>'S/ 999','cat'=>'accesorios'),
-      );
+      <?php if ($products_query->have_posts()) : ?>
+        <?php while ($products_query->have_posts()) : $products_query->the_post(); ?>
+          <?php
+          $product_id = get_the_ID();
+          $price = get_post_meta($product_id, '_cq_price', true);
+          $stock_status = get_post_meta($product_id, '_cq_stock_status', true);
+          $thumbnail_url = get_the_post_thumbnail_url($product_id, 'medium');
+          if (!$thumbnail_url) {
+              $thumbnail_url = 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=800';
+          }
+          ?>
+          <article class="card" role="article">
+            <img src="<?php echo esc_url($thumbnail_url); ?>" alt="<?php echo esc_attr(get_the_title()); ?>"/>
+            <div style="padding:16px;">
+              <div style="font-weight:800;font-size:18px;"><?php the_title(); ?></div>
 
-      $cat = isset($_GET['cat']) ? sanitize_text_field($_GET['cat']) : '';
+              <?php if (has_excerpt()): ?>
+              <div style="color:#cbd5da;margin-top:8px;font-size:14px;line-height:1.6;">
+                <?php echo wp_trim_words(get_the_excerpt(), 12); ?>
+              </div>
+              <?php endif; ?>
 
-      foreach($products as $p){
-        if($cat && $p['cat'] !== $cat) continue;
-        echo '<article class="card" role="article"><img src="'.esc_url($p['img']).'" alt="'.esc_attr($p['title']).'"/><div style="padding:12px;"><div style="font-weight:800">'.esc_html($p['title']).'</div><div style="color:#9aa7ad;margin-top:6px">'.esc_html($p['excerpt']).'</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;"><div style="font-weight:800">'.esc_html($p['price']).'</div><div><a class="btn" href="'.esc_url(add_query_arg(array('product'=>$p['slug']), home_url('/'))).'" style="background:#0f766e;color:#000;padding:8px 10px;border-radius:8px;text-decoration:none;">Ver</a></div></div></div></article>';
-      }
-      ?>
+              <?php if ($stock_status): ?>
+              <div style="margin-top:10px;">
+                <span style="padding:4px 10px;background:<?php echo ($stock_status=='En stock') ? 'rgba(15,118,110,0.15)' : 'rgba(239,68,68,0.15)'; ?>;border-radius:6px;font-size:12px;font-weight:600;color:<?php echo ($stock_status=='En stock') ? '#0f766e' : '#ef4444'; ?>;">
+                  <?php echo esc_html($stock_status); ?>
+                </span>
+              </div>
+              <?php endif; ?>
+
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06);">
+                <div style="font-weight:800;font-size:20px;color:#fff;">
+                  <?php echo esc_html($price ? $price : 'Consultar'); ?>
+                </div>
+                <div>
+                  <a class="btn btn-ghost" href="<?php echo esc_url(add_query_arg(array('product'=>get_post_field('post_name', $product_id)), home_url('/'))); ?>" style="padding:8px 14px;font-size:14px;">
+                    Ver Detalles
+                  </a>
+                </div>
+              </div>
+            </div>
+          </article>
+        <?php endwhile; ?>
+        <?php wp_reset_postdata(); ?>
+      <?php else: ?>
+        <div style="grid-column:1/-1;text-align:center;padding:60px 20px;">
+          <div style="font-size:48px;margin-bottom:16px;">🚲</div>
+          <h3>No hay productos disponibles</h3>
+          <p style="color:#9aa7ad;margin-top:12px;">
+            <?php if (current_user_can('manage_options')): ?>
+              Puedes agregar productos desde el
+              <a href="<?php echo admin_url('post-new.php?post_type=cq_product'); ?>" style="color:#0f766e;">
+                panel de administración
+              </a>.
+            <?php else: ?>
+              Vuelve pronto para ver nuevos productos.
+            <?php endif; ?>
+          </p>
+        </div>
+      <?php endif; ?>
     </div>
+
+    <?php if ($products_query->have_posts() && $products_query->found_posts > 0): ?>
+    <div style="margin-top:40px;text-align:center;color:#9aa7ad;">
+      <p>Mostrando <?php echo $products_query->found_posts; ?> producto(s)</p>
+    </div>
+    <?php endif; ?>
+
   </div>
 </section>
+
 <?php
 get_footer();
 ?>

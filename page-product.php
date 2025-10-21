@@ -1,7 +1,81 @@
 <?php
 get_header();
 
-// Shared products array (same as shop). In production replace with WP/WooCommerce data.
+// Get product by slug from URL
+$product_slug = '';
+if (isset($_GET['product'])) {
+    $product_slug = sanitize_text_field($_GET['product']);
+}
+
+if (!$product_slug) {
+    echo '<main class="max-w-7xl" style="padding:48px 24px;"><h2>Producto no especificado</h2><p style="color:#9aa7ad">Por favor selecciona un producto.</p></main>';
+    get_footer();
+    return;
+}
+
+// Try to get product from WordPress first
+$product_query = new WP_Query(array(
+    'post_type' => 'cq_product',
+    'name' => $product_slug,
+    'posts_per_page' => 1,
+    'post_status' => 'publish'
+));
+
+// If product exists in WordPress, use it
+if ($product_query->have_posts()) {
+    $product_query->the_post();
+    $product_id = get_the_ID();
+
+    // Get all product meta
+    $price = get_post_meta($product_id, '_cq_price', true);
+    $stock_status = get_post_meta($product_id, '_cq_stock_status', true);
+    $stock_meta = get_post_meta($product_id, '_cq_stock_meta', true);
+    $description = get_post_meta($product_id, '_cq_description', true);
+    $specs = get_post_meta($product_id, '_cq_specs', true);
+    $gallery_ids = get_post_meta($product_id, '_cq_gallery', true);
+
+    // Get product category
+    $terms = get_the_terms($product_id, 'cq_product_category');
+    $category = (!empty($terms) && !is_wp_error($terms)) ? $terms[0]->name : '';
+
+    // Get thumbnail and gallery
+    $main_image = get_the_post_thumbnail_url($product_id, 'large');
+    if (!$main_image) {
+        $main_image = 'https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?q=80&w=1200';
+    }
+
+    $gallery = array();
+    if (is_array($gallery_ids)) {
+        foreach ($gallery_ids as $img_id) {
+            $img_url = wp_get_attachment_image_url($img_id, 'large');
+            if ($img_url) {
+                $gallery[] = $img_url;
+            }
+        }
+    }
+    // If no gallery images, use main image
+    if (empty($gallery)) {
+        $gallery[] = $main_image;
+    }
+
+    $product_data = array(
+        'title' => get_the_title(),
+        'excerpt' => get_the_excerpt(),
+        'description' => $description ? $description : get_the_content(),
+        'price' => $price ? $price : 'Consultar',
+        'stock' => $stock_status ? $stock_status : 'Consultar',
+        'meta' => $stock_meta ? $stock_meta : '',
+        'category' => $category,
+        'img' => $main_image,
+        'gallery' => $gallery,
+        'specs' => is_array($specs) ? $specs : array()
+    );
+
+    wp_reset_postdata();
+
+} else {
+    // Fallback to hardcoded products array for backwards compatibility
+    // Shared products array (same as shop). In production replace with WP/WooCommerce data.
 $products = array(
   'mtb-pro-x1' => array(
     'title'=>'MTB Pro X1',
@@ -105,17 +179,37 @@ $products = array(
   ),
 );
 
-// Determine slug
-$slug = '';
-if ( isset($_GET['product']) ) {
-  $slug = sanitize_text_field($_GET['product']);
-}
-if ( !$slug || !isset($products[$slug]) ) {
-  echo '<main class="max-w-7xl" style="padding:36px;"><h2 style="font-size:22px;font-weight:800">Producto no encontrado</h2><p style="color:#9aa7ad">El producto solicitado no existe.</p></main>';
+// Determine slug - fallback logic
+if (!isset($products[$product_slug])) {
+  echo '<main class="max-w-7xl" style="padding:48px 24px;"><h2>Producto no encontrado</h2><p style="color:#9aa7ad">El producto solicitado no existe.</p><p style="margin-top:16px;"><a href="'.esc_url(add_query_arg('view','shop',home_url('/'))).'" class="btn btn-primary">Volver a la Tienda</a></p></main>';
   get_footer();
   return;
 }
-$p = $products[$slug];
+
+$fallback_product = $products[$product_slug];
+$product_data = array(
+    'title' => $fallback_product['title'],
+    'excerpt' => $fallback_product['excerpt'],
+    'description' => $fallback_product['description'],
+    'price' => $fallback_product['price'],
+    'stock' => $fallback_product['stock'],
+    'meta' => $fallback_product['meta'],
+    'category' => $fallback_product['category'],
+    'img' => $fallback_product['img'],
+    'gallery' => $fallback_product['gallery'],
+    'specs' => array()
+);
+
+// Convert old specs format to new format
+if (isset($fallback_product['specs']) && is_array($fallback_product['specs'])) {
+    foreach ($fallback_product['specs'] as $label => $value) {
+        $product_data['specs'][] = array('label' => $label, 'value' => $value);
+    }
+}
+}
+
+// At this point, $product_data contains all product information
+$p = $product_data;
 ?>
 
 <main class="max-w-7xl" style="padding:48px 24px;">
@@ -207,22 +301,23 @@ $p = $products[$slug];
       <div style="margin-top:32px;">
         <h3>Especificaciones Técnicas</h3>
         <div class="specs" style="margin-top:14px;">
-          <?php if(isset($p['specs']) && is_array($p['specs'])): ?>
+          <?php if(!empty($p['specs']) && is_array($p['specs'])): ?>
             <table style="width:100%;border-spacing:0;">
-              <?php foreach($p['specs'] as $label => $value): ?>
-              <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                <td style="padding:12px 12px 12px 0;font-weight:600;color:#fff;width:40%;"><?php echo esc_html($label); ?></td>
-                <td style="padding:12px 0;color:#cbd5da;"><?php echo esc_html($value); ?></td>
-              </tr>
+              <?php foreach($p['specs'] as $spec): ?>
+                <?php if(isset($spec['label']) && isset($spec['value']) && ($spec['label'] || $spec['value'])): ?>
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                  <td style="padding:12px 12px 12px 0;font-weight:600;color:#fff;width:40%;">
+                    <?php echo esc_html($spec['label']); ?>
+                  </td>
+                  <td style="padding:12px 0;color:#cbd5da;">
+                    <?php echo esc_html($spec['value']); ?>
+                  </td>
+                </tr>
+                <?php endif; ?>
               <?php endforeach; ?>
             </table>
           <?php else: ?>
-            <ul>
-              <li>Cuadro: Aluminio / Carbono</li>
-              <li>Cambio: 12 velocidades</li>
-              <li>Frenos: Disco hidráulico</li>
-              <li>Ruedas: 29" / 700c</li>
-            </ul>
+            <p style="color:#9aa7ad;font-style:italic;">No hay especificaciones disponibles.</p>
           <?php endif; ?>
         </div>
       </div>
@@ -232,13 +327,40 @@ $p = $products[$slug];
         <h3>Productos Relacionados</h3>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:14px;">
           <?php
-            foreach($products as $key=>$pp){
-              if($key === $slug) continue;
-              echo '<a href="'.esc_url(add_query_arg(array('product'=>$key), home_url('/'))).'" class="glass" style="text-decoration:none;color:inherit;padding:12px;text-align:center;transition:all 0.3s;">
-                <div style="font-weight:600;font-size:14px;color:#fff;">'.esc_html($pp['title']).'</div>
-                <div style="color:#0f766e;font-size:13px;margin-top:6px;">'.esc_html($pp['price']).'</div>
-              </a>';
+            // Get related products from same category or just other products
+            $related_args = array(
+                'post_type' => 'cq_product',
+                'posts_per_page' => 4,
+                'post__not_in' => array(isset($product_id) ? $product_id : 0),
+                'orderby' => 'rand'
+            );
+
+            // If we have a category, get products from same category
+            if (!empty($category)) {
+                $related_args['tax_query'] = array(
+                    array(
+                        'taxonomy' => 'cq_product_category',
+                        'field'    => 'name',
+                        'terms'    => $category,
+                    ),
+                );
             }
+
+            $related_query = new WP_Query($related_args);
+
+            if ($related_query->have_posts()):
+                while ($related_query->have_posts()): $related_query->the_post();
+                    $rel_price = get_post_meta(get_the_ID(), '_cq_price', true);
+                    $rel_slug = get_post_field('post_name', get_the_ID());
+                    echo '<a href="'.esc_url(add_query_arg(array('product'=>$rel_slug), home_url('/'))).'" class="glass" style="text-decoration:none;color:inherit;padding:12px;text-align:center;transition:all 0.3s;">
+                      <div style="font-weight:600;font-size:14px;color:#fff;">'.esc_html(get_the_title()).'</div>
+                      <div style="color:#0f766e;font-size:13px;margin-top:6px;">'.esc_html($rel_price ? $rel_price : 'Consultar').'</div>
+                    </a>';
+                endwhile;
+                wp_reset_postdata();
+            else:
+                echo '<p style="color:#9aa7ad;font-size:14px;grid-column:1/-1;">No hay productos relacionados disponibles.</p>';
+            endif;
           ?>
         </div>
       </div>
