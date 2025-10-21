@@ -22,16 +22,23 @@
       // Get footer logos
       $logo1_id = get_option('cq_footer_logo_1', '');
       $logo2_id = get_option('cq_footer_logo_2', '');
-      $logo1_url = $logo1_id ? wp_get_attachment_image_url($logo1_id, 'medium') : '';
-      $logo2_url = $logo2_id ? wp_get_attachment_image_url($logo2_id, 'medium') : '';
+      $logo1_url = $logo1_id ? wp_get_attachment_image_url($logo1_id, 'full') : '';
+      $logo2_url = $logo2_id ? wp_get_attachment_image_url($logo2_id, 'full') : '';
+
+      // Debug info (visible in HTML source)
+      echo '<!-- Footer Logos Debug: Logo1 ID='.$logo1_id.', Logo1 URL='.$logo1_url.', Logo2 ID='.$logo2_id.', Logo2 URL='.$logo2_url.' -->';
 
       if ($logo1_url || $logo2_url): ?>
-      <div style="display:flex;gap:24px;align-items:center;justify-content:center;padding:16px 0;">
+      <div style="display:flex;gap:24px;align-items:center;justify-content:center;padding:20px 0;flex-wrap:wrap;">
         <?php if ($logo1_url): ?>
-          <img src="<?php echo esc_url($logo1_url); ?>" alt="Logo 1" style="max-height:50px;max-width:150px;height:auto;width:auto;object-fit:contain;" />
+          <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;">
+            <img src="<?php echo esc_url($logo1_url); ?>" alt="Logo 1" style="max-height:60px;max-width:180px;height:auto;width:auto;object-fit:contain;display:block;" />
+          </div>
         <?php endif; ?>
         <?php if ($logo2_url): ?>
-          <img src="<?php echo esc_url($logo2_url); ?>" alt="Logo 2" style="max-height:50px;max-width:150px;height:auto;width:auto;object-fit:contain;" />
+          <div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;">
+            <img src="<?php echo esc_url($logo2_url); ?>" alt="Logo 2" style="max-height:60px;max-width:180px;height:auto;width:auto;object-fit:contain;display:block;" />
+          </div>
         <?php endif; ?>
       </div>
       <?php endif; ?>

@@ -14,16 +14,30 @@ if (!function_exists('ciclos_queralt_setup')) {
 add_action('after_setup_theme', 'ciclos_queralt_setup');
 
 function cq_enqueue_scripts() {
+  // Version timestamp to bust cache
+  $version = filemtime(get_template_directory() . '/assets/css/styles.css');
+  $js_version = filemtime(get_template_directory() . '/assets/js/main.js');
+
   // Bootstrap Icons (kept via CDN for icons)
   wp_enqueue_style('bootstrap-icons','https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css', array(), null);
 
-  // Theme CSS (local)
-  wp_enqueue_style('ciclos-style', get_template_directory_uri() . '/assets/css/styles.css', array(), wp_get_theme()->get('Version'));
+  // Theme CSS (local) - with timestamp version
+  wp_enqueue_style('ciclos-style', get_template_directory_uri() . '/assets/css/styles.css', array(), $version);
 
-  // JS propio
-  wp_enqueue_script('ciclos-main', get_template_directory_uri() . '/assets/js/main.js', array(), null, true);
+  // JS propio - with timestamp version
+  wp_enqueue_script('ciclos-main', get_template_directory_uri() . '/assets/js/main.js', array(), $js_version, true);
 }
 add_action('wp_enqueue_scripts', 'cq_enqueue_scripts');
+
+// Add headers to prevent caching during development
+function cq_add_no_cache_headers() {
+  if (!is_admin()) {
+    header("Cache-Control: no-cache, no-store, must-revalidate");
+    header("Pragma: no-cache");
+    header("Expires: 0");
+  }
+}
+add_action('send_headers', 'cq_add_no_cache_headers');
 
 
 
@@ -512,11 +526,17 @@ function cq_images_settings_page_html() {
 
         foreach ($image_fields as $field) {
             if (isset($_POST[$field])) {
-                update_option($field, intval($_POST[$field]));
+                $value = intval($_POST[$field]);
+                update_option($field, $value);
+                error_log("CQ Images: Saved $field = $value");
+            } else {
+                // Si el campo no existe en POST, guardarlo como vacío
+                update_option($field, '');
+                error_log("CQ Images: Cleared $field");
             }
         }
 
-        echo '<div class="notice notice-success"><p>Imágenes guardadas correctamente.</p></div>';
+        echo '<div class="notice notice-success is-dismissible" style="border-left:4px solid #0f766e;"><p><strong>¡Éxito!</strong> Las imágenes se han guardado correctamente. Recarga la página principal para ver los cambios (Ctrl+F5 para forzar recarga).</p></div>';
     }
 
     // Obtener valores actuales
@@ -525,6 +545,10 @@ function cq_images_settings_page_html() {
     <div class="wrap">
         <h1>Configuración de Imágenes del Sitio</h1>
         <p>Gestiona las imágenes que aparecen en diferentes secciones de tu sitio web.</p>
+
+        <div class="notice notice-info" style="margin:15px 0;">
+            <p><strong>Nota:</strong> Después de guardar cambios, recarga la página con <kbd>Ctrl+F5</kbd> (Windows/Linux) o <kbd>Cmd+Shift+R</kbd> (Mac) para ver las actualizaciones y evitar problemas de caché.</p>
+        </div>
 
         <form method="post" action="">
             <?php wp_nonce_field('cq_images_settings'); ?>
