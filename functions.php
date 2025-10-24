@@ -14,16 +14,49 @@ if (!function_exists('ciclos_queralt_setup')) {
 add_action('after_setup_theme', 'ciclos_queralt_setup');
 
 function cq_enqueue_scripts() {
+  // Version timestamp to bust cache
+  $version = filemtime(get_template_directory() . '/assets/css/styles.css');
+  $js_version = filemtime(get_template_directory() . '/assets/js/main.js');
+
   // Bootstrap Icons (kept via CDN for icons)
   wp_enqueue_style('bootstrap-icons','https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css', array(), null);
 
-  // Theme CSS (local)
-  wp_enqueue_style('ciclos-style', get_template_directory_uri() . '/assets/css/styles.css', array(), wp_get_theme()->get('Version'));
+  // Theme CSS (local) - with timestamp version
+  wp_enqueue_style('ciclos-style', get_template_directory_uri() . '/assets/css/styles.css', array(), $version);
 
-  // JS propio
-  wp_enqueue_script('ciclos-main', get_template_directory_uri() . '/assets/js/main.js', array(), null, true);
+  // JS propio - with timestamp version
+  wp_enqueue_script('ciclos-main', get_template_directory_uri() . '/assets/js/main.js', array(), $js_version, true);
 }
 add_action('wp_enqueue_scripts', 'cq_enqueue_scripts');
+
+// Disable all WordPress caching
+if (!defined('WP_CACHE')) define('WP_CACHE', false);
+if (!defined('DONOTCACHEPAGE')) define('DONOTCACHEPAGE', true);
+if (!defined('DONOTCACHEDB')) define('DONOTCACHEDB', true);
+if (!defined('DONOTMINIFY')) define('DONOTMINIFY', true);
+if (!defined('DONOTCDN')) define('DONOTCDN', true);
+if (!defined('DONOTCACHEOBJECT')) define('DONOTCACHEOBJECT', true);
+
+// Add headers to prevent caching
+function cq_add_no_cache_headers() {
+  if (!is_admin()) {
+    header("Cache-Control: no-cache, no-store, must-revalidate, max-age=0");
+    header("Pragma: no-cache");
+    header("Expires: Thu, 01 Jan 1970 00:00:00 GMT");
+    header("X-Accel-Expires: 0");
+  }
+}
+add_action('send_headers', 'cq_add_no_cache_headers');
+
+// Disable WordPress object cache
+add_filter('wp_using_ext_object_cache', '__return_false');
+
+// Clear all caches on every page load (temporary for debugging)
+add_action('init', function() {
+  if (!is_admin()) {
+    wp_cache_flush();
+  }
+});
 
 
 
@@ -66,25 +99,63 @@ function cq_create_demo_pages_on_activation() {
 }
 add_action('after_switch_theme', 'cq_create_demo_pages_on_activation');
 
+// Force flush rewrite rules on init to ensure clean URLs work
+add_action('init', function() {
+    static $flushed = false;
+    if (!$flushed && !is_admin()) {
+        flush_rewrite_rules(false);
+        $flushed = true;
+    }
+}, 999);
+
 
 
 /* Simple handlers for contact form and newsletter (demo).
    They redirect back with a query param and send email to admin_email.
 */
 function cq_handle_contact_form() {
-  if (!isset($_POST['nombre'])) wp_redirect( wp_get_referer() ?: home_url('/') );
-  $name = sanitize_text_field($_POST['nombre']);
-  $contact = sanitize_text_field($_POST['contacto']);
-  $message = sanitize_textarea_field($_POST['mensaje']);
-  $to = get_option('admin_email');
-  $subject = 'Contacto desde web: ' . $name;
-  $body = "Nombre: $name
-Contacto: $contact
+  if (!isset($_POST['nombre'])) {
+    wp_redirect( add_query_arg('cq_error','1', wp_get_referer() ?: home_url('/') ) );
+    exit;
+  }
 
-Mensaje:
-$message";
-  wp_mail($to, $subject, $body);
-  wp_redirect( add_query_arg('cq_sent','1', wp_get_referer() ?: home_url('/') ) );
+  $name = sanitize_text_field($_POST['nombre']);
+  $email = isset($_POST['email']) ? sanitize_email($_POST['email']) : '';
+  $phone = isset($_POST['telefono']) ? sanitize_text_field($_POST['telefono']) : '';
+  $subject_type = isset($_POST['asunto']) ? sanitize_text_field($_POST['asunto']) : 'Consulta general';
+  $message = sanitize_textarea_field($_POST['mensaje']);
+
+  // Validate required fields
+  if (empty($name) || empty($email) || empty($message)) {
+    wp_redirect( add_query_arg('cq_error','1', wp_get_referer() ?: home_url('/') ) );
+    exit;
+  }
+
+  $to = get_option('admin_email');
+  $subject = 'Contacto desde web: ' . $subject_type . ' - ' . $name;
+
+  $body = "=== NUEVO MENSAJE DE CONTACTO ===\n\n";
+  $body .= "Nombre: $name\n";
+  $body .= "Email: $email\n";
+  if ($phone) $body .= "Teléfono: $phone\n";
+  $body .= "Asunto: $subject_type\n";
+  $body .= "\n--- MENSAJE ---\n\n";
+  $body .= $message;
+  $body .= "\n\n--- FIN DEL MENSAJE ---\n";
+  $body .= "\nFecha: " . date('d/m/Y H:i:s');
+
+  $headers = array(
+    'From: ' . $name . ' <' . $email . '>',
+    'Reply-To: ' . $email
+  );
+
+  $sent = wp_mail($to, $subject, $body, $headers);
+
+  if ($sent) {
+    wp_redirect( add_query_arg('cq_sent','1', wp_get_referer() ?: home_url('/') ) );
+  } else {
+    wp_redirect( add_query_arg('cq_error','1', wp_get_referer() ?: home_url('/') ) );
+  }
   exit;
 }
 add_action('admin_post_nopriv_cq_contact_form','cq_handle_contact_form');
@@ -103,3 +174,505 @@ function cq_handle_newsletter(){
 }
 add_action('admin_post_nopriv_cq_newsletter','cq_handle_newsletter');
 add_action('admin_post_cq_newsletter','cq_handle_newsletter');
+
+
+/* ========================================
+   CUSTOM POST TYPE: PRODUCTOS
+   ======================================== */
+
+function cq_register_product_post_type() {
+    $labels = array(
+        'name'                  => 'Productos',
+        'singular_name'         => 'Producto',
+        'menu_name'             => 'Productos',
+        'add_new'               => 'Añadir Producto',
+        'add_new_item'          => 'Añadir Nuevo Producto',
+        'edit_item'             => 'Editar Producto',
+        'new_item'              => 'Nuevo Producto',
+        'view_item'             => 'Ver Producto',
+        'search_items'          => 'Buscar Productos',
+        'not_found'             => 'No se encontraron productos',
+        'not_found_in_trash'    => 'No hay productos en la papelera',
+        'all_items'             => 'Todos los Productos',
+    );
+
+    $args = array(
+        'labels'                => $labels,
+        'public'                => true,
+        'has_archive'           => false,
+        'publicly_queryable'    => true,
+        'show_ui'               => true,
+        'show_in_menu'          => true,
+        'show_in_nav_menus'     => true,
+        'show_in_admin_bar'     => true,
+        'menu_icon'             => 'dashicons-cart',
+        'capability_type'       => 'post',
+        'hierarchical'          => false,
+        'supports'              => array('title', 'editor', 'thumbnail', 'excerpt'),
+        'rewrite'               => array('slug' => 'producto'),
+        'menu_position'         => 5,
+    );
+
+    register_post_type('cq_product', $args);
+
+    // Registrar taxonomía de categorías de productos
+    $cat_labels = array(
+        'name'              => 'Categorías de Productos',
+        'singular_name'     => 'Categoría',
+        'search_items'      => 'Buscar Categorías',
+        'all_items'         => 'Todas las Categorías',
+        'parent_item'       => 'Categoría Padre',
+        'parent_item_colon' => 'Categoría Padre:',
+        'edit_item'         => 'Editar Categoría',
+        'update_item'       => 'Actualizar Categoría',
+        'add_new_item'      => 'Añadir Nueva Categoría',
+        'new_item_name'     => 'Nombre de Nueva Categoría',
+        'menu_name'         => 'Categorías',
+    );
+
+    register_taxonomy(
+        'cq_product_category',
+        'cq_product',
+        array(
+            'hierarchical'      => true,
+            'labels'            => $cat_labels,
+            'show_ui'           => true,
+            'show_admin_column' => true,
+            'query_var'         => true,
+            'rewrite'           => array('slug' => 'categoria-producto'),
+        )
+    );
+}
+add_action('init', 'cq_register_product_post_type');
+
+// Crear categorías por defecto al activar el tema
+function cq_create_default_product_categories() {
+    // Verificar si ya existen categorías
+    $existing = get_terms(array('taxonomy' => 'cq_product_category', 'hide_empty' => false));
+    if (!empty($existing)) return;
+
+    $categories = array('Montaña', 'Carretera', 'Gravel', 'Urbana', 'Accesorios');
+    foreach ($categories as $cat) {
+        if (!term_exists($cat, 'cq_product_category')) {
+            wp_insert_term($cat, 'cq_product_category');
+        }
+    }
+}
+add_action('after_switch_theme', 'cq_create_default_product_categories');
+
+
+/* ========================================
+   META BOXES PARA PRODUCTOS
+   ======================================== */
+
+function cq_add_product_meta_boxes() {
+    add_meta_box(
+        'cq_product_details',
+        'Detalles del Producto',
+        'cq_product_details_callback',
+        'cq_product',
+        'normal',
+        'high'
+    );
+
+    add_meta_box(
+        'cq_product_specs',
+        'Especificaciones Técnicas',
+        'cq_product_specs_callback',
+        'cq_product',
+        'normal',
+        'high'
+    );
+
+    add_meta_box(
+        'cq_product_gallery',
+        'Galería de Imágenes',
+        'cq_product_gallery_callback',
+        'cq_product',
+        'side',
+        'default'
+    );
+}
+add_action('add_meta_boxes', 'cq_add_product_meta_boxes');
+
+// Callback para detalles del producto
+function cq_product_details_callback($post) {
+    wp_nonce_field('cq_save_product_details', 'cq_product_details_nonce');
+
+    $price = get_post_meta($post->ID, '_cq_price', true);
+    $stock_status = get_post_meta($post->ID, '_cq_stock_status', true);
+    $stock_meta = get_post_meta($post->ID, '_cq_stock_meta', true);
+    $description = get_post_meta($post->ID, '_cq_description', true);
+
+    ?>
+    <style>
+        .cq-meta-box { margin-bottom: 20px; }
+        .cq-meta-box label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .cq-meta-box input[type="text"],
+        .cq-meta-box input[type="number"],
+        .cq-meta-box textarea,
+        .cq-meta-box select { width: 100%; padding: 8px; }
+        .cq-meta-box textarea { min-height: 100px; }
+        .cq-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    </style>
+
+    <div class="cq-meta-grid">
+        <div class="cq-meta-box">
+            <label for="cq_price">Precio (ej: €2,799)</label>
+            <input type="text" id="cq_price" name="cq_price" value="<?php echo esc_attr($price); ?>" placeholder="€0,000" />
+        </div>
+
+        <div class="cq-meta-box">
+            <label for="cq_stock_status">Estado de Stock</label>
+            <select id="cq_stock_status" name="cq_stock_status">
+                <option value="En stock" <?php selected($stock_status, 'En stock'); ?>>En stock</option>
+                <option value="Pre-orden" <?php selected($stock_status, 'Pre-orden'); ?>>Pre-orden</option>
+                <option value="Últimas unidades" <?php selected($stock_status, 'Últimas unidades'); ?>>Últimas unidades</option>
+                <option value="Agotado" <?php selected($stock_status, 'Agotado'); ?>>Agotado</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="cq-meta-box">
+        <label for="cq_stock_meta">Información de Envío (ej: Envío 24-48h)</label>
+        <input type="text" id="cq_stock_meta" name="cq_stock_meta" value="<?php echo esc_attr($stock_meta); ?>" placeholder="Envío 24-48h" />
+    </div>
+
+    <div class="cq-meta-box">
+        <label for="cq_description">Descripción Detallada</label>
+        <textarea id="cq_description" name="cq_description" placeholder="Descripción completa del producto..."><?php echo esc_textarea($description); ?></textarea>
+        <p style="color: #666; font-size: 12px; margin-top: 5px;">Esta descripción aparecerá en la página del producto además del extracto.</p>
+    </div>
+    <?php
+}
+
+// Callback para especificaciones técnicas
+function cq_product_specs_callback($post) {
+    wp_nonce_field('cq_save_product_specs', 'cq_product_specs_nonce');
+
+    $specs = get_post_meta($post->ID, '_cq_specs', true);
+    if (!is_array($specs)) {
+        $specs = array(
+            array('label' => 'Cuadro', 'value' => ''),
+            array('label' => 'Horquilla', 'value' => ''),
+            array('label' => 'Transmisión', 'value' => ''),
+            array('label' => 'Frenos', 'value' => ''),
+            array('label' => 'Ruedas', 'value' => ''),
+            array('label' => 'Neumáticos', 'value' => ''),
+            array('label' => 'Peso', 'value' => ''),
+        );
+    }
+    ?>
+    <div id="cq-specs-container">
+        <?php foreach ($specs as $index => $spec): ?>
+        <div class="cq-spec-row" style="display: grid; grid-template-columns: 1fr 2fr 50px; gap: 10px; margin-bottom: 10px;">
+            <input type="text" name="cq_specs[<?php echo $index; ?>][label]" value="<?php echo esc_attr($spec['label']); ?>" placeholder="Etiqueta (ej: Cuadro)" />
+            <input type="text" name="cq_specs[<?php echo $index; ?>][value]" value="<?php echo esc_attr($spec['value']); ?>" placeholder="Valor (ej: Aluminio 6061)" />
+            <button type="button" class="button cq-remove-spec">Eliminar</button>
+        </div>
+        <?php endforeach; ?>
+    </div>
+
+    <button type="button" class="button" id="cq-add-spec">+ Añadir Especificación</button>
+
+    <script>
+    jQuery(document).ready(function($) {
+        var specIndex = <?php echo count($specs); ?>;
+
+        $('#cq-add-spec').on('click', function() {
+            var html = '<div class="cq-spec-row" style="display: grid; grid-template-columns: 1fr 2fr 50px; gap: 10px; margin-bottom: 10px;">';
+            html += '<input type="text" name="cq_specs[' + specIndex + '][label]" placeholder="Etiqueta" />';
+            html += '<input type="text" name="cq_specs[' + specIndex + '][value]" placeholder="Valor" />';
+            html += '<button type="button" class="button cq-remove-spec">Eliminar</button>';
+            html += '</div>';
+            $('#cq-specs-container').append(html);
+            specIndex++;
+        });
+
+        $(document).on('click', '.cq-remove-spec', function() {
+            $(this).closest('.cq-spec-row').remove();
+        });
+    });
+    </script>
+    <?php
+}
+
+// Callback para galería de imágenes
+function cq_product_gallery_callback($post) {
+    wp_nonce_field('cq_save_product_gallery', 'cq_product_gallery_nonce');
+
+    $gallery_ids = get_post_meta($post->ID, '_cq_gallery', true);
+    if (!is_array($gallery_ids)) {
+        $gallery_ids = array();
+    }
+    ?>
+    <div id="cq-gallery-container">
+        <div id="cq-gallery-images" style="margin-bottom: 10px;">
+            <?php foreach ($gallery_ids as $img_id): ?>
+                <?php $img_url = wp_get_attachment_image_url($img_id, 'thumbnail'); ?>
+                <?php if ($img_url): ?>
+                <div class="cq-gallery-item" style="display: inline-block; margin: 5px; position: relative;">
+                    <img src="<?php echo esc_url($img_url); ?>" style="max-width: 80px; height: auto;" />
+                    <input type="hidden" name="cq_gallery[]" value="<?php echo esc_attr($img_id); ?>" />
+                    <button type="button" class="button cq-remove-gallery-img" style="position: absolute; top: 0; right: 0; padding: 2px 6px; font-size: 10px;">×</button>
+                </div>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        </div>
+        <button type="button" class="button" id="cq-add-gallery-images">+ Añadir Imágenes</button>
+        <p style="color: #666; font-size: 12px; margin-top: 10px;">
+            Estas imágenes aparecerán en la galería del producto. La imagen destacada será la imagen principal.
+        </p>
+    </div>
+
+    <script>
+    jQuery(document).ready(function($) {
+        var mediaUploader;
+
+        $('#cq-add-gallery-images').on('click', function(e) {
+            e.preventDefault();
+
+            if (mediaUploader) {
+                mediaUploader.open();
+                return;
+            }
+
+            mediaUploader = wp.media({
+                title: 'Seleccionar Imágenes de Galería',
+                button: { text: 'Añadir a Galería' },
+                multiple: true
+            });
+
+            mediaUploader.on('select', function() {
+                var attachments = mediaUploader.state().get('selection').toJSON();
+                attachments.forEach(function(attachment) {
+                    var html = '<div class="cq-gallery-item" style="display: inline-block; margin: 5px; position: relative;">';
+                    html += '<img src="' + attachment.sizes.thumbnail.url + '" style="max-width: 80px; height: auto;" />';
+                    html += '<input type="hidden" name="cq_gallery[]" value="' + attachment.id + '" />';
+                    html += '<button type="button" class="button cq-remove-gallery-img" style="position: absolute; top: 0; right: 0; padding: 2px 6px; font-size: 10px;">×</button>';
+                    html += '</div>';
+                    $('#cq-gallery-images').append(html);
+                });
+            });
+
+            mediaUploader.open();
+        });
+
+        $(document).on('click', '.cq-remove-gallery-img', function() {
+            $(this).closest('.cq-gallery-item').remove();
+        });
+    });
+    </script>
+    <?php
+}
+
+// Guardar meta boxes
+function cq_save_product_meta_boxes($post_id) {
+    // Verificar nonce y permisos
+    if (!isset($_POST['cq_product_details_nonce']) || !wp_verify_nonce($_POST['cq_product_details_nonce'], 'cq_save_product_details')) {
+        return;
+    }
+
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+    if (!current_user_can('edit_post', $post_id)) return;
+
+    // Guardar detalles del producto
+    if (isset($_POST['cq_price'])) {
+        update_post_meta($post_id, '_cq_price', sanitize_text_field($_POST['cq_price']));
+    }
+    if (isset($_POST['cq_stock_status'])) {
+        update_post_meta($post_id, '_cq_stock_status', sanitize_text_field($_POST['cq_stock_status']));
+    }
+    if (isset($_POST['cq_stock_meta'])) {
+        update_post_meta($post_id, '_cq_stock_meta', sanitize_text_field($_POST['cq_stock_meta']));
+    }
+    if (isset($_POST['cq_description'])) {
+        update_post_meta($post_id, '_cq_description', sanitize_textarea_field($_POST['cq_description']));
+    }
+
+    // Guardar especificaciones
+    if (isset($_POST['cq_specs']) && is_array($_POST['cq_specs'])) {
+        $specs = array();
+        foreach ($_POST['cq_specs'] as $spec) {
+            if (!empty($spec['label']) || !empty($spec['value'])) {
+                $specs[] = array(
+                    'label' => sanitize_text_field($spec['label']),
+                    'value' => sanitize_text_field($spec['value'])
+                );
+            }
+        }
+        update_post_meta($post_id, '_cq_specs', $specs);
+    }
+
+    // Guardar galería
+    if (isset($_POST['cq_gallery']) && is_array($_POST['cq_gallery'])) {
+        $gallery_ids = array_map('intval', $_POST['cq_gallery']);
+        update_post_meta($post_id, '_cq_gallery', $gallery_ids);
+    } else {
+        delete_post_meta($post_id, '_cq_gallery');
+    }
+}
+add_action('save_post_cq_product', 'cq_save_product_meta_boxes');
+
+
+/* ========================================
+   PÁGINA DE CONFIGURACIÓN DE IMÁGENES
+   ======================================== */
+
+function cq_add_images_settings_page() {
+    add_theme_page(
+        'Configuración de Imágenes',
+        'Imágenes del Sitio',
+        'manage_options',
+        'cq-images-settings',
+        'cq_images_settings_page_html'
+    );
+}
+add_action('admin_menu', 'cq_add_images_settings_page');
+
+function cq_images_settings_page_html() {
+    if (!current_user_can('manage_options')) return;
+
+    // Enqueue media uploader scripts
+    wp_enqueue_media();
+
+    // Guardar cambios
+    if (isset($_POST['cq_save_images'])) {
+        check_admin_referer('cq_images_settings');
+
+        $image_fields = array(
+            'cq_hero_image',
+            'cq_about_team_1',
+            'cq_about_team_2',
+            'cq_about_team_3',
+            'cq_about_team_4',
+            'cq_about_team_5',
+            'cq_about_team_6',
+            'cq_footer_logo_1',
+            'cq_footer_logo_2'
+        );
+
+        foreach ($image_fields as $field) {
+            if (isset($_POST[$field])) {
+                $value = intval($_POST[$field]);
+                update_option($field, $value);
+                error_log("CQ Images: Saved $field = $value");
+            } else {
+                // Si el campo no existe en POST, guardarlo como vacío
+                update_option($field, '');
+                error_log("CQ Images: Cleared $field");
+            }
+        }
+
+        echo '<div class="notice notice-success is-dismissible" style="border-left:4px solid #0f766e;"><p><strong>¡Éxito!</strong> Las imágenes se han guardado correctamente. Recarga la página principal para ver los cambios (Ctrl+F5 para forzar recarga).</p></div>';
+    }
+
+    // Obtener valores actuales
+    $hero_image = get_option('cq_hero_image', '');
+    ?>
+    <div class="wrap">
+        <h1>Configuración de Imágenes del Sitio</h1>
+        <p>Gestiona las imágenes que aparecen en diferentes secciones de tu sitio web.</p>
+
+        <div class="notice notice-info" style="margin:15px 0;">
+            <p><strong>Nota:</strong> Después de guardar cambios, recarga la página con <kbd>Ctrl+F5</kbd> (Windows/Linux) o <kbd>Cmd+Shift+R</kbd> (Mac) para ver las actualizaciones y evitar problemas de caché.</p>
+        </div>
+
+        <form method="post" action="">
+            <?php wp_nonce_field('cq_images_settings'); ?>
+
+            <h2>Página Principal</h2>
+            <table class="form-table">
+                <tr>
+                    <th scope="row">Imagen Hero Principal</th>
+                    <td>
+                        <?php cq_image_uploader_field('cq_hero_image', $hero_image); ?>
+                        <p class="description">Imagen principal de la sección hero en la página de inicio.</p>
+                    </td>
+                </tr>
+            </table>
+
+            <h2>Página Sobre Nosotros - Equipo</h2>
+            <table class="form-table">
+                <?php for ($i = 1; $i <= 6; $i++): ?>
+                    <?php $field_name = 'cq_about_team_' . $i; ?>
+                    <?php $field_value = get_option($field_name, ''); ?>
+                    <tr>
+                        <th scope="row">Foto Miembro del Equipo <?php echo $i; ?></th>
+                        <td>
+                            <?php cq_image_uploader_field($field_name, $field_value); ?>
+                        </td>
+                    </tr>
+                <?php endfor; ?>
+            </table>
+
+            <h2>Footer - Logos</h2>
+            <table class="form-table">
+                <?php for ($i = 1; $i <= 2; $i++): ?>
+                    <?php $field_name = 'cq_footer_logo_' . $i; ?>
+                    <?php $field_value = get_option($field_name, ''); ?>
+                    <tr>
+                        <th scope="row">Logo <?php echo $i; ?></th>
+                        <td>
+                            <?php cq_image_uploader_field($field_name, $field_value); ?>
+                            <p class="description">Logo <?php echo $i; ?> que aparece en el footer del sitio.</p>
+                        </td>
+                    </tr>
+                <?php endfor; ?>
+            </table>
+
+            <?php submit_button('Guardar Imágenes', 'primary', 'cq_save_images'); ?>
+        </form>
+    </div>
+
+    <script>
+    jQuery(document).ready(function($) {
+        $('.cq-upload-image-button').on('click', function(e) {
+            e.preventDefault();
+            var button = $(this);
+            var fieldId = button.data('field');
+
+            var mediaUploader = wp.media({
+                title: 'Seleccionar Imagen',
+                button: { text: 'Usar esta imagen' },
+                multiple: false
+            });
+
+            mediaUploader.on('select', function() {
+                var attachment = mediaUploader.state().get('selection').first().toJSON();
+                $('#' + fieldId).val(attachment.id);
+                $('#' + fieldId + '_preview').html('<img src="' + attachment.url + '" style="max-width: 200px; height: auto;" />');
+            });
+
+            mediaUploader.open();
+        });
+
+        $('.cq-remove-image-button').on('click', function(e) {
+            e.preventDefault();
+            var fieldId = $(this).data('field');
+            $('#' + fieldId).val('');
+            $('#' + fieldId + '_preview').html('');
+        });
+    });
+    </script>
+    <?php
+}
+
+function cq_image_uploader_field($field_name, $field_value) {
+    $image_url = '';
+    if ($field_value) {
+        $image_url = wp_get_attachment_image_url($field_value, 'medium');
+    }
+    ?>
+    <div>
+        <input type="hidden" id="<?php echo esc_attr($field_name); ?>" name="<?php echo esc_attr($field_name); ?>" value="<?php echo esc_attr($field_value); ?>" />
+        <div id="<?php echo esc_attr($field_name); ?>_preview" style="margin-bottom: 10px;">
+            <?php if ($image_url): ?>
+                <img src="<?php echo esc_url($image_url); ?>" style="max-width: 200px; height: auto;" />
+            <?php endif; ?>
+        </div>
+        <button type="button" class="button cq-upload-image-button" data-field="<?php echo esc_attr($field_name); ?>">Seleccionar Imagen</button>
+        <button type="button" class="button cq-remove-image-button" data-field="<?php echo esc_attr($field_name); ?>">Eliminar Imagen</button>
+    </div>
+    <?php
+}

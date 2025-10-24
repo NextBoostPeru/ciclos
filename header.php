@@ -7,6 +7,10 @@
   <?php wp_head(); ?>
 </head>
 <body <?php body_class(); ?>>
+  <!-- DEBUG: Template version 2.0 loaded at <?php echo date('Y-m-d H:i:s'); ?> -->
+  <div style="position:fixed;top:10px;right:10px;background:#0f766e;color:#000;padding:8px 12px;border-radius:6px;font-size:11px;font-weight:700;z-index:9999;font-family:monospace;">
+    v2.0 - <?php echo date('H:i:s'); ?>
+  </div>
   <header>
     <div class="max-w-7xl header-inner">
       <a href="<?php echo esc_url(home_url('/')); ?>" class="logo">
